@@ -141,7 +141,7 @@ function AdminReferralsPage() {
 function ManualReferralDialog({ counselors, onSuccess }: { counselors: any[]; onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [matricNo, setMatricNo] = useState("");
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState<"AVERAGE" | "BELOW AVERAGE">("BELOW AVERAGE");
   const [counselorId, setCounselorId] = useState("");
 
   const submitMut = useMutation({
@@ -163,7 +163,7 @@ function ManualReferralDialog({ counselors, onSuccess }: { counselors: any[]; on
       toast.success("Referral created successfully.");
       setOpen(false);
       setMatricNo("");
-      setReason("");
+      setReason("BELOW AVERAGE");
       setCounselorId("");
       onSuccess();
     },
@@ -205,7 +205,15 @@ function ManualReferralDialog({ counselors, onSuccess }: { counselors: any[]; on
           </div>
           <div className="space-y-2">
             <Label>Reason</Label>
-            <Textarea placeholder="Reason for referral..." value={reason} onChange={(e) => setReason(e.target.value)} />
+            <Select value={reason} onValueChange={(val: "AVERAGE" | "BELOW AVERAGE") => setReason(val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BELOW AVERAGE">Below Average</SelectItem>
+                <SelectItem value="AVERAGE">Average</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button disabled={!matricNo || !reason || !counselorId || submitMut.isPending} onClick={() => submitMut.mutate()} className="w-full">
             {submitMut.isPending ? "Submitting..." : "Create Referral"}
