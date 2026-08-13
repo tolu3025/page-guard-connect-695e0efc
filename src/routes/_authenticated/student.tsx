@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { recalculateCgpaSummary } from "@/lib/recalculate-cgpa";
 import { AppNav } from "@/components/AppNav";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -50,6 +51,8 @@ function StudentPage() {
     mutationFn: async (id: number) => {
       const { error } = await supabase.from("grades").delete().eq("id", id);
       if (error) throw error;
+      // Recalculate CGPA from remaining grades
+      await recalculateCgpaSummary(matric!);
     },
     onSuccess: () => {
       toast.success("Grade removed");
