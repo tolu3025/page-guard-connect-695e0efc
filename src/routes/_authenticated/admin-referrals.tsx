@@ -21,6 +21,8 @@ function AdminReferralsPage() {
   const refQ = useQuery({
     queryKey: ["admin-referrals"],
     enabled: !!isAdmin,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // refresh every 5 seconds to match updates
     queryFn: async () => {
       const { data, error } = await supabase
         .from("counselor_referrals")
