@@ -258,6 +258,21 @@ function StudentPage() {
     onError: (e: any) => toast.error(e.message || "Failed to submit result"),
   });
 
+  const deleteSubmissionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from("result_submissions")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Submission deleted successfully.");
+      qc.invalidateQueries({ queryKey: ["my-submissions"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to delete submission"),
+  });
+
   // Calculate semester GPAs for AI Early Warning System
   const semesterStats = (() => {
     const map = new Map<string, { label: string; cu: number; wp: number }>();
@@ -476,6 +491,20 @@ function StudentPage() {
                             Admin Note: &ldquo;{sub.admin_notes}&rdquo;
                           </div>
                         )}
+
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this result submission?")) {
+                                deleteSubmissionMutation.mutate(sub.id);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20 transition-colors"
+                            title="Delete Submission"
+                          >
+                            <Trash2 className="size-3" /> Remove Submission
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
