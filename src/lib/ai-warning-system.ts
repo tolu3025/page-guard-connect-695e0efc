@@ -265,13 +265,14 @@ export async function ensureHighRiskCounselorReferral(matricNo: string, currentC
     .maybeSingle();
 
   if (!existing) {
-    // Pick first counselor
+    // Pick a counselor randomly to distribute referrals evenly among new/existing counselors
     const { data: counselors } = await supabase
       .from("counselors")
-      .select("id")
-      .limit(1);
+      .select("id");
 
-    const counselorId = counselors && counselors.length > 0 ? counselors[0]!.id : null;
+    const counselorId = counselors && counselors.length > 0 
+      ? counselors[Math.floor(Math.random() * counselors.length)]!.id 
+      : null;
     const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     await supabase.from("counselor_referrals").insert({
