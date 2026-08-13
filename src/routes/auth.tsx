@@ -50,8 +50,15 @@ function AuthPage() {
         if (error) throw error;
       }
       navigate({ to: "/dashboard" });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+    } catch (err: any) {
+      let msg = "Something went wrong";
+      if (err?.message && err.message !== "{}") {
+        msg = err.message;
+      } else if (err?.status === 429 || err?.code === "over_email_send_rate_limit") {
+        msg = "Too many signup attempts. Please wait a few minutes and try again.";
+      } else if (typeof err === "object" && (!err?.message || err.message === "{}")) {
+        msg = "Signup temporarily unavailable — email rate limit reached. Please wait a few minutes and try again.";
+      }
       toast.error(msg);
     } finally {
       setLoading(false);
