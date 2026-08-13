@@ -33,9 +33,9 @@ function Landing() {
           </div>
 
           <h1 className="mt-4 text-5xl font-bold leading-[1.02] tracking-tight md:text-7xl">
-            <span className="text-gradient">Your CGPA,</span>
+            <span className="text-gradient">Track Your</span>
             <br />
-            <span className="text-gradient">simplified.</span>
+            <span className="text-gradient">Academic Journey.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
             A single, beautifully minimal place to follow your performance and stay close to your counselor — built for students who care about the details.

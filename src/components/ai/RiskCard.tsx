@@ -51,7 +51,7 @@ export function RiskCard({
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">
             {isHigh ? <ShieldAlert className="size-4 text-destructive" /> : isMedium ? <AlertTriangle className="size-4 text-warning" /> : <CheckCircle2 className="size-4 text-success" />}
-            AI Academic Risk Assessment
+            Academic Risk Assessment
           </div>
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${badgeStyle}`}>
             {riskLevel}
@@ -63,7 +63,7 @@ export function RiskCard({
             {riskLevel}
           </span>
           <span className="text-xs font-medium text-muted-foreground">
-            ({pct}% AI Model Confidence)
+            ({pct}% Model Confidence)
           </span>
         </div>
 
@@ -83,7 +83,7 @@ export function RiskCard({
 
         {decisionReason && (
           <div className="mt-5 rounded-2xl border border-border/60 bg-surface/60 p-3.5 text-xs text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-foreground">AI Diagnostic Rationale: </span>
+            <span className="font-semibold text-foreground">Diagnostic Rationale: </span>
             {decisionReason}
           </div>
         )}

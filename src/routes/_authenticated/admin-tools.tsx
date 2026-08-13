@@ -136,13 +136,13 @@ function AdminToolsPage() {
         throw new Error(`CGPA summary insert error: ${cgpaErr.message}`);
       }
 
-      // 4. Trigger AI Predictive Analytics Workflow
+      // 4. Trigger Predictive Analytics Workflow
       const aiResult = await runAndSaveStudentPrediction(mat);
       return { mat, newCgpa, aiResult };
     },
     onSuccess: (data: any) => {
       toast.success(
-        `Grade saved! CGPA: ${data.newCgpa.toFixed(2)} | AI Risk: ${data.aiResult.prediction.riskLevel}`
+        `Grade saved! CGPA: ${data.newCgpa.toFixed(2)} | Risk: ${data.aiResult.prediction.riskLevel}`
       );
       setCourseCode("");
       setCourseTitle("");
@@ -221,7 +221,7 @@ function AdminToolsPage() {
         throw new Error(`CGPA summary insert error: ${cgpaErr.message}`);
       }
 
-      // 3. Trigger AI Predictions
+      // 3. Trigger Predictions
       await runAndSaveStudentPrediction(sub.matric_no);
 
       // 4. Mark submission as APPROVED
@@ -314,8 +314,8 @@ function AdminToolsPage() {
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 md:pt-12">
         <PageHeader
           eyebrow="Admin"
-          title="Grade Management & AI Tools"
-          subtitle="Record grades, review student result submissions, and launch AI Risk Assessment."
+          title="Grade Management Tools"
+          subtitle="Record grades, review student result submissions, and launch Risk Assessment."
           icon={<Icon3d name="gear" size={64} />}
         />
 
@@ -410,7 +410,7 @@ function AdminToolsPage() {
               </div>
             </section>
 
-            {/* Grade Upload & AI Workflow Tool */}
+            {/* Grade Upload & Workflow Tool */}
             <section className="mt-8 card-elevated rounded-3xl p-6 md:p-8 border border-primary/20 bg-surface/80">
               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                 <FileSpreadsheet className="size-4" />

@@ -20,7 +20,7 @@ export function TrendChart({ pastSemesters, predictedNextGpa, trendSlope = 0 }: 
 
   if (predictedNextGpa !== undefined) {
     points.push({
-      label: "Next (AI)",
+      label: "Next",
       value: Number(predictedNextGpa.toFixed(2)),
       isPredicted: true,
     });

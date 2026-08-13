@@ -404,7 +404,7 @@ function StudentPage() {
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold tracking-tight">Academic Overview</h2>
-                <p className="text-xs text-muted-foreground">Track your CGPA, submit printed portal results for admin approval, and review AI insights.</p>
+                <p className="text-xs text-muted-foreground">Track your CGPA, submit printed portal results for admin approval, and review insights.</p>
               </div>
             </div>
 
@@ -483,7 +483,7 @@ function StudentPage() {
               </section>
             )}
 
-            {/* AI Academic Early Warning & Predictive Intelligence Panel */}
+            {/* Academic Early Warning & Predictive Intelligence Panel */}
             <section className="mt-10">
               {cgpaQ.isLoading || gradesQ.isLoading ? (
                 <div className="flex items-center justify-center p-12 card-elevated rounded-3xl">
@@ -497,7 +497,7 @@ function StudentPage() {
                     <Sparkles className="size-8" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold">AI Analysis Awaiting Your Grades</h3>
+                    <h3 className="text-base font-semibold">Analysis Awaiting Your Grades</h3>
                     <p className="text-xs text-muted-foreground mt-1 max-w-sm">
                       Once Admin approves your submitted semester results, the ML model will run a personalised
                       risk prediction and grade forecast here.

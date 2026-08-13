@@ -107,7 +107,7 @@ export function AIInsightPanel({
             className="flex items-center gap-2 rounded-full border border-border bg-surface/60 px-4 py-2 text-xs font-semibold hover:bg-accent transition disabled:opacity-50"
           >
             <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            <span>{isLoading ? "Analyzing…" : "Refresh AI Analysis"}</span>
+            <span>{isLoading ? "Analyzing…" : "Refresh Analysis"}</span>
           </button>
         </div>
       </div>
@@ -119,7 +119,7 @@ export function AIInsightPanel({
             <Loader2 className="size-8 animate-spin text-primary" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold">Running AI Analysis…</p>
+            <p className="text-sm font-semibold">Running Analysis…</p>
             <p className="text-xs text-muted-foreground mt-1">
               Querying ML model for risk prediction &amp; grade forecast
             </p>
