@@ -49,6 +49,8 @@ function AdminStudentsPage() {
   const studentsQ = useQuery({
     queryKey: ["admin-students"],
     enabled: !!isAdmin,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // auto-refresh every 5 seconds to match updates
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")

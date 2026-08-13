@@ -16,6 +16,8 @@ function AdminPage() {
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     enabled: !!isAdmin,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
     queryFn: async () => {
       const [students, counselors, referrals, cgpa] = await Promise.all([
         supabase.from("students").select("matric_no", { count: "exact", head: true }),
