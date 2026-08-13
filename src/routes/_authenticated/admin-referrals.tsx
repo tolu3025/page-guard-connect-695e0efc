@@ -26,7 +26,7 @@ function AdminReferralsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("counselor_referrals")
-        .select("*, counselors(full_name), students(student_name)")
+        .select("*, counselors(full_name), students(student_name, cgpa_summary(cgpa))")
         .order("referred_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -92,7 +92,11 @@ function AdminReferralsPage() {
                         <td className="px-6 py-3 font-medium">{r.students?.student_name ?? r.matric_no}</td>
                         <td className="px-3 py-3 text-muted-foreground">{r.referral_reason}</td>
                         <td className="px-3 py-3 text-muted-foreground">{r.counselors?.full_name ?? "—"}</td>
-                        <td className="px-3 py-3 text-right tabular-nums">{Number(r.cgpa_at_referral).toFixed(2)}</td>
+                        <td className="px-3 py-3 text-right tabular-nums">
+                          {r.students?.cgpa_summary && (Array.isArray(r.students.cgpa_summary) ? r.students.cgpa_summary[0] : r.students.cgpa_summary)?.cgpa !== undefined
+                            ? Number((Array.isArray(r.students.cgpa_summary) ? r.students.cgpa_summary[0] : r.students.cgpa_summary).cgpa).toFixed(2)
+                            : Number(r.cgpa_at_referral).toFixed(2)}
+                        </td>
                         <td className="px-3 py-3">
                           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${tone(r.status)}`}>{r.status}</span>
                         </td>
