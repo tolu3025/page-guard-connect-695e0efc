@@ -242,6 +242,24 @@ function AdminToolsPage() {
 
   const rejectSubmissionMutation = useMutation({
     mutationFn: async ({ id, notes }: { id: number; notes?: string }) => {
+      // 1. Fetch the submission details first to know the matric_no, level, and semester
+      const { data: sub, error: fetchErr } = await supabase
+        .from("result_submissions")
+        .select("matric_no, level, semester")
+        .eq("id", id)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      // 2. Delete all grades matching this student's matric_no, level, and semester
+      const { error: gradeErr } = await supabase
+        .from("grades")
+        .delete()
+        .eq("matric_no", sub.matric_no)
+        .eq("level", Number(sub.level))
+        .eq("semester", Number(sub.semester));
+      if (gradeErr) throw gradeErr;
+
+      // 3. Reject the submission record
       const { error } = await supabase
         .from("result_submissions")
         .update({ status: "REJECTED", admin_notes: notes || "Rejected by admin", reviewed_at: new Date().toISOString() })
@@ -249,7 +267,7 @@ function AdminToolsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Submission rejected");
+      toast.success("Submission rejected and generated grades removed successfully.");
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message || "Failed to reject submission"),
