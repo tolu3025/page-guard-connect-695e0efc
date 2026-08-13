@@ -215,6 +215,38 @@ function StudentModal({ matric, onClose }: { matric: string; onClose: () => void
     onError: (e: any) => toast.error(e.message ?? "Update failed"),
   });
 
+  const deleteStudent = useMutation({
+    mutationFn: async () => {
+      // 1. Clear matric_no on profiles
+      await supabase
+        .from("profiles")
+        .update({ matric_no: null })
+        .eq("matric_no", matric);
+
+      // 2. Delete counselor referrals
+      await supabase.from("counselor_referrals").delete().eq("matric_no", matric);
+
+      // 3. Delete result submissions
+      await supabase.from("result_submissions").delete().eq("matric_no", matric);
+
+      // 4. Delete grades
+      await supabase.from("grades").delete().eq("matric_no", matric);
+
+      // 5. Delete cgpa_summary
+      await supabase.from("cgpa_summary").delete().eq("matric_no", matric);
+
+      // 6. Delete student record
+      const { error } = await supabase.from("students").delete().eq("matric_no", matric);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Student records completely removed");
+      qc.invalidateQueries({ queryKey: ["admin-students"] });
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Delete failed"),
+  });
+
   /* ── Grades ── */
   const gradesQ = useQuery({
     queryKey: ["admin-student-grades", matric],
@@ -377,13 +409,27 @@ function StudentModal({ matric, onClose }: { matric: string; onClose: () => void
               </div>
             </div>
           )}
-          <button
-            onClick={() => updateStudent.mutate()}
-            disabled={updateStudent.isPending}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60 transition-opacity"
-          >
-            {updateStudent.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save Info
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => updateStudent.mutate()}
+              disabled={updateStudent.isPending}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60 transition-opacity"
+            >
+              {updateStudent.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save Info
+            </button>
+
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to permanently delete this student, all their grades, referrals, and submissions?")) {
+                  deleteStudent.mutate();
+                }
+              }}
+              disabled={deleteStudent.isPending}
+              className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/25 disabled:opacity-60 transition-colors"
+            >
+              {deleteStudent.isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Delete Student
+            </button>
+          </div>
         </section>
 
         {/* ── Grades Section ── */}
