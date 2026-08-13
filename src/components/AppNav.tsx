@@ -1,11 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Menu, X, Sun, Moon } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Icon3d, type Icon3dName } from "./Icon3d";
-import { useCurrentUser } from "@/lib/use-current-user";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface NavItem {
   to: string;
@@ -13,146 +11,89 @@ interface NavItem {
   icon: Icon3dName;
 }
 
-export function AppNav({ role: propRole, name: propName }: { role?: "student" | "counselor" | "admin" | null; name?: string }) {
+export function AppNav({ role, name }: { role: "student" | "counselor" | "admin" | null; name?: string }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
-  const { data: me } = useCurrentUser();
-  const queryClient = useQueryClient();
-
-  // Theme Management (Light vs Dark Mode)
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("theme") as "dark" | "light") || "dark";
-    }
-    return "dark";
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "light") {
-      root.classList.add("light");
-      root.classList.remove("dark");
-    } else {
-      root.classList.remove("light");
-      root.classList.add("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        queryClient.setQueryData(["current-user"], null);
-        queryClient.invalidateQueries();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [queryClient]);
-
-  const activeRole = propRole ?? me?.primaryRole ?? null;
-  const activeName = propName ?? me?.fullName ?? me?.email ?? undefined;
-  const isSignedIn = !!me?.userId;
 
   const items: NavItem[] = [];
-  if (isSignedIn) {
-    if (activeRole === "student") {
-      items.push({ to: "/student", label: "Overview", icon: "cap" });
-      items.push({ to: "/my-grades", label: "Grades", icon: "book" });
-      items.push({ to: "/my-referrals", label: "Referrals", icon: "inbox" });
-      items.push({ to: "/trends", label: "Trends", icon: "chart" });
-      items.push({ to: "/counselors", label: "Counselors", icon: "people" });
-    } else if (activeRole === "counselor") {
-      items.push({ to: "/counselor", label: "Referrals", icon: "people" });
-      items.push({ to: "/leaderboard", label: "Leaderboard", icon: "trophy" });
-    } else if (activeRole === "admin") {
-      items.push({ to: "/admin", label: "Overview", icon: "shield" });
-      items.push({ to: "/admin-students", label: "Students", icon: "users" });
-      items.push({ to: "/admin-referrals", label: "Referrals", icon: "inbox" });
-      items.push({ to: "/counselors", label: "Counselors", icon: "people" });
-      items.push({ to: "/leaderboard", label: "Leaderboard", icon: "trophy" });
-      items.push({ to: "/admin-tools", label: "Tools", icon: "gear" });
-    }
-    items.push({ to: "/profile", label: "Profile", icon: "sparkle" });
+  if (role === "student") {
+    items.push({ to: "/student", label: "Overview", icon: "cap" });
+    items.push({ to: "/my-grades", label: "Grades", icon: "book" });
+    items.push({ to: "/my-referrals", label: "Referrals", icon: "inbox" });
+    items.push({ to: "/trends", label: "Trends", icon: "chart" });
+    items.push({ to: "/counselors", label: "Counselors", icon: "people" });
   }
+  if (role === "counselor") {
+    items.push({ to: "/counselor", label: "Referrals", icon: "people" });
+    items.push({ to: "/leaderboard", label: "Leaderboard", icon: "trophy" });
+  }
+  if (role === "admin") {
+    items.push({ to: "/admin", label: "Overview", icon: "shield" });
+    items.push({ to: "/admin-students", label: "Students", icon: "users" });
+    items.push({ to: "/admin-referrals", label: "Referrals", icon: "inbox" });
+    items.push({ to: "/counselors", label: "Counselors", icon: "people" });
+    items.push({ to: "/leaderboard", label: "Leaderboard", icon: "trophy" });
+    items.push({ to: "/admin-tools", label: "Tools", icon: "gear" });
+  }
+  if (role) items.push({ to: "/profile", label: "Profile", icon: "sparkle" });
 
   async function signOut() {
     await supabase.auth.signOut();
-    queryClient.setQueryData(["current-user"], null);
-    queryClient.removeQueries({ queryKey: ["current-user"] });
-    queryClient.invalidateQueries();
     toast.success("Signed out");
     navigate({ to: "/" });
   }
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 bg-background">
-      <div className="bg-card border border-border/80 shadow-sm mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-3 py-2">
-        <Link to="/" className="flex items-center gap-2.5 px-1">
-          <img src="/logo.png" alt="Grade Lens Logo" className="h-8 w-auto object-contain" />
+    <header className="sticky top-0 z-40 px-3 pt-3">
+      <div className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-3 py-2">
+        <Link to="/" className="flex items-center gap-2 px-1">
+          <Icon3d name="app" size={32} priority />
           <span className="font-display text-[15px] font-semibold tracking-tight">Grade Lens</span>
         </Link>
 
-        {isSignedIn && (
-          <nav className="hidden items-center gap-1 md:flex">
-            {items.map((it) => {
-              const active = pathname.startsWith(it.to);
-              return (
-                <Link
-                  key={it.to}
-                  to={it.to}
-                  className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
-                    active
-                      ? "bg-primary/15 text-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
-                >
-                  <Icon3d name={it.icon} size={18} />
-                  {it.label}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+        <nav className="hidden items-center gap-1 md:flex">
+          {items.map((it) => {
+            const active = pathname.startsWith(it.to);
+            return (
+              <Link
+                key={it.to}
+                to={it.to}
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
+                  active
+                    ? "bg-primary/15 text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                <Icon3d name={it.icon} size={18} />
+                {it.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         <div className="flex items-center gap-2">
-          {/* Light / Dark Mode Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            className="flex items-center justify-center rounded-full bg-secondary p-2 text-foreground hover:bg-accent transition"
-            aria-label="Toggle Light/Dark Theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="size-4 text-warning" />
-            ) : (
-              <Moon className="size-4 text-primary" />
-            )}
-          </button>
-
-          {isSignedIn && activeName && (
-            <span className="hidden max-w-[14ch] truncate text-[13px] text-muted-foreground sm:inline">
-              {activeName}
+          {name && (
+            <span className="hidden max-w-[12ch] truncate text-[13px] text-muted-foreground sm:inline">
+              {name}
             </span>
           )}
-          {isSignedIn ? (
+          {role ? (
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-[13px] font-medium hover:bg-accent transition"
+              className="hidden items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-[13px] font-medium hover:bg-accent md:flex"
             >
               <LogOut className="size-3.5" /> Sign out
             </button>
           ) : (
             <Link
               to="/auth"
-              className="rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-medium text-primary-foreground hover:opacity-90 transition"
+              className="rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-medium text-primary-foreground hover:opacity-90"
             >
               Sign in
             </Link>
           )}
-          {isSignedIn && (
+          {role && (
             <button
               onClick={() => setOpen((o) => !o)}
               className="rounded-full bg-secondary p-2 md:hidden"
@@ -164,8 +105,8 @@ export function AppNav({ role: propRole, name: propName }: { role?: "student" | 
         </div>
       </div>
 
-      {isSignedIn && open && (
-        <div className="bg-card border border-border shadow-lg mx-auto mt-2 grid max-w-6xl gap-1 rounded-2xl p-2 md:hidden">
+      {role && open && (
+        <div className="glass mx-auto mt-2 grid max-w-6xl gap-1 rounded-2xl p-2 md:hidden">
           {items.map((it) => (
             <Link
               key={it.to}

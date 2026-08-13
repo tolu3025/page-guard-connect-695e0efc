@@ -14,62 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      predictions: {
-        Row: {
-          id: string
-          matric_no: string
-          current_cgpa: number
-          predicted_gpa: number
-          predicted_cgpa: number
-          risk_level: string
-          risk_probability: number
-          trend_direction: string
-          trend_slope: number
-          recommendations: Json
-          failed_courses_count: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          matric_no: string
-          current_cgpa?: number
-          predicted_gpa?: number
-          predicted_cgpa?: number
-          risk_level: string
-          risk_probability?: number
-          trend_direction: string
-          trend_slope?: number
-          recommendations?: Json
-          failed_courses_count?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          matric_no?: string
-          current_cgpa?: number
-          predicted_gpa?: number
-          predicted_cgpa?: number
-          risk_level?: string
-          risk_probability?: number
-          trend_direction?: string
-          trend_slope?: number
-          recommendations?: Json
-          failed_courses_count?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "predictions_matric_no_fkey"
-            columns: ["matric_no"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["matric_no"]
-          },
-        ]
-      }
       cgpa_summary: {
         Row: {
           cgpa: number
@@ -324,59 +268,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      result_submissions: {
-        Row: {
-          id: number
-          student_id: string | null
-          matric_no: string
-          student_name: string | null
-          level: number
-          semester: number
-          courses_json: Json
-          status: string
-          submitted_at: string | null
-          reviewed_at: string | null
-          admin_notes: string | null
-          screenshot_base64: string | null
-        }
-        Insert: {
-          id?: number
-          student_id?: string | null
-          matric_no: string
-          student_name?: string | null
-          level: number
-          semester: number
-          courses_json: Json
-          status?: string
-          submitted_at?: string | null
-          reviewed_at?: string | null
-          admin_notes?: string | null
-          screenshot_base64?: string | null
-        }
-        Update: {
-          id?: number
-          student_id?: string | null
-          matric_no?: string
-          student_name?: string | null
-          level?: number
-          semester?: number
-          courses_json?: Json
-          status?: string
-          submitted_at?: string | null
-          reviewed_at?: string | null
-          admin_notes?: string | null
-          screenshot_base64?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "result_submissions_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
       }
     }
     Views: {

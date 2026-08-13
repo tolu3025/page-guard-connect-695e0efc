@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppNav } from "@/components/AppNav";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -18,23 +18,15 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  
-  // Student Details State
   const [fullName, setFullName] = useState("");
   const [matric, setMatric] = useState("");
-  const [level, setLevel] = useState("100");
-  const [department, setDepartment] = useState("Software Engineering");
-  const [programme, setProgramme] = useState("B.Sc. Software Engineering");
-  
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) navigate({ to: "/dashboard" });
+      if (data.user) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
 
@@ -43,71 +35,21 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const formattedMatric = matric.trim().toUpperCase();
-        const selectedLevel = Number(level) || 100;
-        const dept = department.trim() || "Software Engineering";
-        const prog = programme.trim() || "B.Sc. Software Engineering";
-
-        if (!formattedMatric) {
-          throw new Error("Please enter your official Matriculation Number (e.g. 2024/11705)");
-        }
-
-        // 1. Create account in Auth with student metadata
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin + "/dashboard",
-            data: {
-              full_name: fullName,
-              matric_no: formattedMatric,
-              level: selectedLevel,
-              department: dept,
-              programme: prog,
-              role: "student"
-            },
+            data: { full_name: fullName, matric_no: matric.trim().toUpperCase() || null },
           },
         });
-        if (signUpError) throw signUpError;
-
-        // 2. Sign in immediately to establish authenticated session
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-
-        // 3. Upsert into students table
-        await supabase.from("students").upsert({
-          matric_no: formattedMatric,
-          student_name: fullName || email.split("@")[0],
-          level: selectedLevel,
-          department: dept,
-          programme: prog
-        });
-
-        // 4. Update profiles table
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData?.user?.id) {
-          await supabase.from("profiles").upsert({
-            id: userData.user.id,
-            email,
-            full_name: fullName,
-            matric_no: formattedMatric
-          });
-
-          // Assign default student role in user_roles
-          await supabase.from("user_roles").upsert({
-            user_id: userData.user.id,
-            role: "student"
-          }).select();
-        }
-
-        toast.success("Account created successfully!");
-        navigate({ to: "/student" });
+        if (error) throw error;
+        toast.success("Account created. Signing you in…");
       } else {
-        // --- SIGN IN ---
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard" });
       }
+      navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       toast.error(msg);
@@ -118,8 +60,8 @@ function AuthPage() {
 
   return (
     <div className="min-h-screen">
-      <AppNav />
-      <main className="mx-auto flex max-w-md flex-col px-4 pb-24 pt-12 md:pt-16">
+      <AppNav role={null} />
+      <main className="mx-auto flex max-w-md flex-col px-4 pb-24 pt-16 md:pt-24">
         <div className="card-elevated rounded-3xl p-8">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -127,109 +69,46 @@ function AuthPage() {
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "signin"
-                ? "Sign in to access your Grade Lens portal."
-                : "Students: enter your matric number, level, and department."}
+                ? "Sign in to view your record."
+                : "Students: enter your matric number to link your record."}
             </p>
           </div>
 
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="space-y-3">
             {mode === "signup" && (
               <>
-                <div>
-                  <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Full Name *</label>
-                  <input
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    placeholder="e.g. Ayinoluwa Ifeoluwa"
-                    className="w-full rounded-xl border border-input bg-surface/70 px-4 py-2.5 text-sm outline-none focus:ring-focus font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Matriculation Number *</label>
-                  <input
-                    value={matric}
-                    onChange={(e) => setMatric(e.target.value)}
-                    required
-                    placeholder="e.g. 2024/11705"
-                    className="w-full rounded-xl border border-input bg-surface/70 px-4 py-2.5 text-sm outline-none focus:ring-focus font-medium"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Academic Level *</label>
-                    <select
-                      value={level}
-                      onChange={(e) => setLevel(e.target.value)}
-                      className="w-full rounded-xl border border-input bg-surface/70 px-3.5 py-2.5 text-sm outline-none focus:ring-focus font-medium"
-                    >
-                      <option value="100">100 Level</option>
-                      <option value="200">200 Level</option>
-                      <option value="300">300 Level</option>
-                      <option value="400">400 Level</option>
-                      <option value="500">500 Level</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Department *</label>
-                    <input
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      required
-                      placeholder="Software Engineering"
-                      className="w-full rounded-xl border border-input bg-surface/70 px-3.5 py-2.5 text-sm outline-none focus:ring-focus font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Programme</label>
-                  <input
-                    value={programme}
-                    onChange={(e) => setProgramme(e.target.value)}
-                    placeholder="B.Sc. Software Engineering"
-                    className="w-full rounded-xl border border-input bg-surface/70 px-4 py-2.5 text-sm outline-none focus:ring-focus font-medium"
-                  />
-                </div>
+                <Field
+                  label="Full name"
+                  value={fullName}
+                  onChange={setFullName}
+                  required
+                  placeholder="Jane Doe"
+                />
+                <Field
+                  label="Matric no. (students only)"
+                  value={matric}
+                  onChange={setMatric}
+                  placeholder="e.g. CSC/2020/001"
+                />
               </>
             )}
-
-            <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Email Address *</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="w-full rounded-xl border border-input bg-surface/70 px-4 py-2.5 text-sm outline-none focus:ring-focus font-medium"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-muted-foreground">Password *</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  minLength={6}
-                  className="w-full rounded-xl border border-input bg-surface/70 px-4 py-2.5 text-sm outline-none focus:ring-focus pr-10 font-medium"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-            </div>
+            <Field
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              required
+              placeholder="you@example.com"
+            />
+            <Field
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              required
+              placeholder="••••••••"
+              minLength={6}
+            />
 
             <button
               type="submit"
@@ -237,7 +116,7 @@ function AuthPage() {
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
-              {mode === "signin" ? "Sign in" : "Create Account"}
+              {mode === "signin" ? "Sign in" : "Create account"}
             </button>
           </form>
 
@@ -253,5 +132,32 @@ function AuthPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function Field({
+  label, value, onChange, type = "text", required, placeholder, minLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  minLength?: number;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[12px] font-medium text-muted-foreground">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type={type}
+        required={required}
+        placeholder={placeholder}
+        minLength={minLength}
+        className="w-full rounded-xl border border-input bg-surface/70 px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-transparent focus:ring-focus"
+      />
+    </label>
   );
 }

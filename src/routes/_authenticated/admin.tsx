@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { AppNav } from "@/components/AppNav";
-import { Loader2, BrainCircuit, ShieldAlert, Sparkles, RefreshCw } from "lucide-react";
-import { batchRunAllStudentPredictions } from "@/lib/ai-warning-system";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -14,48 +12,17 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminPage() {
   const { data: me } = useCurrentUser();
   const isAdmin = me?.roles.includes("admin");
-  const qc = useQueryClient();
-
-  const predictionsQ = useQuery({
-    queryKey: ["admin-predictions"],
-    enabled: !!isAdmin,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("predictions")
-        .select("*, students(student_name)")
-        .order("created_at", { ascending: false });
-      if (error) return [];
-      return data ?? [];
-    },
-  });
-
-  const runBatchMutation = useMutation({
-    mutationFn: async () => {
-      return await batchRunAllStudentPredictions();
-    },
-    onSuccess: (res) => {
-      toast.success(`Ran AI Risk Assessment for ${res.length} students`);
-      qc.invalidateQueries({ queryKey: ["admin-predictions"] });
-      qc.invalidateQueries({ queryKey: ["admin-stats"] });
-    },
-    onError: (e: any) => toast.error(e.message || "Failed to run batch predictions"),
-  });
 
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     enabled: !!isAdmin,
     queryFn: async () => {
-      const [profiles, counselors, referrals, cgpa, predictions] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
+      const [students, counselors, referrals, cgpa] = await Promise.all([
+        supabase.from("students").select("matric_no", { count: "exact", head: true }),
         supabase.from("counselors").select("id", { count: "exact", head: true }),
         supabase.from("counselor_referrals").select("status"),
         supabase.from("cgpa_summary").select("classification, cgpa"),
-        supabase.from("predictions").select("risk_level"),
       ]);
-
-      // profiles = all registered users (students + admins + counselors)
-      const totalStudents = profiles.count ?? 0;
-
       const refByStatus: Record<string, number> = {};
       for (const r of referrals.data ?? []) refByStatus[r.status] = (refByStatus[r.status] ?? 0) + 1;
       const classCounts: Record<string, number> = {};
@@ -64,27 +31,13 @@ function AdminPage() {
         classCounts[c.classification] = (classCounts[c.classification] ?? 0) + 1;
         total++; sum += Number(c.cgpa);
       }
-      
-      let highRiskCount = 0;
-      let mediumRiskCount = 0;
-      let lowRiskCount = 0;
-      for (const p of predictions.data ?? []) {
-        const lvl = (p.risk_level ?? "").toUpperCase();
-        if (lvl.includes("HIGH")) highRiskCount++;
-        else if (lvl.includes("MEDIUM")) mediumRiskCount++;
-        else if (lvl.includes("LOW")) lowRiskCount++;
-      }
-
       return {
-        students: totalStudents,
+        students: students.count ?? 0,
         counselors: counselors.count ?? 0,
         referrals: referrals.data?.length ?? 0,
         refByStatus,
         classCounts,
         avgCgpa: total ? sum / total : 0,
-        highRiskCount,
-        mediumRiskCount,
-        lowRiskCount,
       };
     },
   });
@@ -121,46 +74,14 @@ function AdminPage() {
           </div>
         ) : (
           <>
-            <section className="mt-8 grid gap-3 md:grid-cols-5">
+            <section className="mt-8 grid gap-3 md:grid-cols-4">
               <StatCard label="Students" value={statsQ.data!.students} />
               <StatCard label="Counselors" value={statsQ.data!.counselors} />
               <StatCard label="Referrals" value={statsQ.data!.referrals} />
               <StatCard label="Avg CGPA" value={statsQ.data!.avgCgpa.toFixed(2)} />
-              <div className="card-elevated rounded-2xl p-5 border border-destructive/30 bg-destructive/5">
-                <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-destructive font-semibold">
-                  <ShieldAlert className="size-3.5" /> High Risk AI Alert
-                </div>
-                <div className="mt-1 text-3xl font-bold tabular-nums text-destructive">
-                  {statsQ.data!.highRiskCount}
-                </div>
-              </div>
             </section>
 
-            {/* AI Early Warning Control Banner */}
-            <section className="mt-8 card-elevated rounded-3xl p-6 md:p-8 flex flex-wrap items-center justify-between gap-4 border border-primary/20 bg-primary/5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/20 text-primary">
-                  <BrainCircuit className="size-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold">AI Academic Risk Batch Engine</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Evaluate all student CGPA trends, generate forecasts, and auto-refer High Risk cases.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => runBatchMutation.mutate()}
-                disabled={runBatchMutation.isPending}
-                className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
-              >
-                {runBatchMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Run AI Batch Prediction
-              </button>
-            </section>
-
-            <section className="mt-8 grid gap-4 md:grid-cols-3">
+            <section className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="card-elevated rounded-3xl p-6">
                 <h3 className="text-sm font-semibold">Referrals by status</h3>
                 <div className="mt-4 space-y-3">
@@ -181,16 +102,6 @@ function AdminPage() {
                   {Object.keys(statsQ.data!.classCounts).length === 0 && (
                     <div className="text-sm text-muted-foreground">No CGPA records yet.</div>
                   )}
-                </div>
-              </div>
-              <div className="card-elevated rounded-3xl p-6">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <ShieldAlert className="size-4 text-warning" /> AI Risk Distribution
-                </h3>
-                <div className="mt-4 space-y-3">
-                  <Bar label="High Risk" value={statsQ.data!.highRiskCount} max={statsQ.data!.students || 1} />
-                  <Bar label="Medium Risk" value={statsQ.data!.mediumRiskCount} max={statsQ.data!.students || 1} />
-                  <Bar label="Low Risk" value={statsQ.data!.lowRiskCount} max={statsQ.data!.students || 1} />
                 </div>
               </div>
             </section>

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { AppNav, PageHeader } from "@/components/AppNav";
 import { Icon3d } from "@/components/Icon3d";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/my-grades")({
   component: MyGradesPage,
@@ -18,32 +19,29 @@ function MyGradesPage() {
     queryKey: ["grades", matric],
     enabled: !!matric,
     queryFn: async () => {
-      const mat = (matric || "").trim();
-      if (!mat) return [];
-
-      const { data: exactData } = await supabase
+      const { data, error } = await supabase
         .from("grades")
         .select("*")
-        .ilike("matric_no", mat)
+        .eq("matric_no", matric!)
         .order("level", { ascending: true })
         .order("semester", { ascending: true });
-
-      if (exactData && exactData.length > 0) return exactData;
-
-      const { data: allGrades } = await supabase
-        .from("grades")
-        .select("*")
-        .order("level", { ascending: true })
-        .order("semester", { ascending: true });
-
-      if (!allGrades) return [];
-
-      const matClean = mat.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      return allGrades.filter((g: any) => {
-        const gClean = (g.matric_no ?? "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-        return gClean === matClean || (matClean.length >= 4 && gClean.includes(matClean));
-      });
+      if (error) throw error;
+      return data ?? [];
     },
+  });
+
+  const qc = useQueryClient();
+  const deleteGrade = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase.from("grades").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Grade removed");
+      qc.invalidateQueries({ queryKey: ["grades", matric] });
+      qc.invalidateQueries({ queryKey: ["cgpa", matric] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not remove grade"),
   });
 
   return (
@@ -64,7 +62,7 @@ function MyGradesPage() {
           ) : (gradesQ.data?.length ?? 0) === 0 ? (
             <Empty text="No grades on file." />
           ) : (
-            <Grouped grades={gradesQ.data!} />
+            <Grouped grades={gradesQ.data!} onDelete={(id) => deleteGrade.mutate(id)} />
           )}
         </div>
       </main>
@@ -72,7 +70,7 @@ function MyGradesPage() {
   );
 }
 
-function Grouped({ grades }: { grades: any[] }) {
+function Grouped({ grades, onDelete }: { grades: any[], onDelete?: (id: number) => void }) {
   const groups = new Map<string, any[]>();
   for (const g of grades) {
     const key = `Level ${g.level} · Semester ${g.semester}`;
@@ -103,7 +101,8 @@ function Grouped({ grades }: { grades: any[] }) {
                     <th className="px-3 py-3 text-right font-medium">CU</th>
                     <th className="px-3 py-3 text-right font-medium">Score</th>
                     <th className="px-3 py-3 text-right font-medium">Grade</th>
-                    <th className="px-6 py-3 text-right font-medium">Pts</th>
+                    <th className="px-3 py-3 text-right font-medium">Pts</th>
+                    {onDelete && <th className="px-6 py-3 text-right font-medium"></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -116,7 +115,18 @@ function Grouped({ grades }: { grades: any[] }) {
                       <td className="px-3 py-3 text-right">
                         <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${gradeTone(r.grade)}`}>{r.grade}</span>
                       </td>
-                      <td className="px-6 py-3 text-right tabular-nums">{r.weighted_point}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">{r.weighted_point}</td>
+                      {onDelete && (
+                        <td className="px-6 py-3 text-right">
+                          <button
+                            onClick={() => onDelete(r.id)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20 transition-colors"
+                            title="Remove grade"
+                          >
+                            <Trash2 className="size-3" /> Remove
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
