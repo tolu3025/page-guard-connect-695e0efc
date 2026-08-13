@@ -26,7 +26,7 @@ export function PredictionCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">
           <Sparkles className="size-4 text-primary" />
-          Linear Regression Forecast
+          Academic Forecast
         </div>
         <div
           className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -54,7 +54,7 @@ export function PredictionCard({
 
         {/* Predicted Next Semester GPA */}
         <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 relative overflow-hidden">
-          <div className="text-[11px] uppercase tracking-wider text-primary font-semibold">Predicted Next GPA</div>
+          <div className="text-[11px] uppercase tracking-wider text-primary font-semibold">Proposed Next GPA</div>
           <div className="mt-1 text-3xl font-extrabold tabular-nums text-gradient">
             {Number(predictedNextGpa).toFixed(2)}
           </div>
