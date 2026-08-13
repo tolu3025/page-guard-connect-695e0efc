@@ -1,18 +1,32 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { AppNav } from "@/components/AppNav";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/counselor")({
   component: CounselorPage,
 });
 
 function CounselorPage() {
+  const navigate = useNavigate();
   const { data: me } = useCurrentUser();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    if (me) {
+      if (me.primaryRole === "student") {
+        navigate({ to: "/student", replace: true });
+      } else if (me.primaryRole === "admin") {
+        navigate({ to: "/admin", replace: true });
+      } else if (me.primaryRole !== "counselor") {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    }
+  }, [me, navigate]);
 
   const counselorQ = useQuery({
     queryKey: ["counselor-self", me?.userId],

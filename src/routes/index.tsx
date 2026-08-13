@@ -45,7 +45,7 @@ function Landing() {
               to="/auth"
               className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
             >
-              Open your portal
+              Check your portal
               <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
             </Link>
             <a

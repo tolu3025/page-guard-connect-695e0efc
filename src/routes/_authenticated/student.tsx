@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
@@ -28,9 +28,22 @@ export const Route = createFileRoute("/_authenticated/student")({
 });
 
 function StudentPage() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const matric = me?.matricNo;
+
+  useEffect(() => {
+    if (me) {
+      if (me.primaryRole === "counselor") {
+        navigate({ to: "/counselor", replace: true });
+      } else if (me.primaryRole === "admin") {
+        navigate({ to: "/admin", replace: true });
+      } else if (me.primaryRole !== "student") {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    }
+  }, [me, navigate]);
 
   // Profile prompt update state
   const [showUpdateModal, setShowUpdateModal] = useState(false);
