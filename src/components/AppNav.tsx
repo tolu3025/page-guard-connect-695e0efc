@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useState, useEffect, type ReactNode } from "react";
 import { Icon3d, type Icon3dName } from "./Icon3d";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface NavItem {
   to: string;
@@ -14,6 +15,7 @@ interface NavItem {
 
 export function AppNav({ role, name }: { role: "student" | "counselor" | "admin" | null; name?: string }) {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const { data: me } = useCurrentUser();
@@ -67,8 +69,9 @@ export function AppNav({ role, name }: { role: "student" | "counselor" | "admin"
 
   async function signOut() {
     await supabase.auth.signOut();
+    qc.clear(); // Clear all cached queries immediately so headers update without stale data
     toast.success("Signed out");
-    navigate({ to: "/" });
+    navigate({ to: "/", replace: true });
   }
 
   return (
