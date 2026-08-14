@@ -43,6 +43,18 @@ function CounselorPage() {
     },
   });
 
+  useEffect(() => {
+    if (me && me.primaryRole === "counselor" && counselorQ.isFetched && !counselorQ.data) {
+      supabase.from("counselors").insert({
+        user_id: me.userId,
+        full_name: me.fullName || me.email?.split("@")[0] || "Counselor",
+        email: me.email
+      }).then(() => {
+        qc.invalidateQueries({ queryKey: ["counselor-self", me.userId] });
+      });
+    }
+  }, [me, counselorQ.isFetched, counselorQ.data, qc]);
+
   const refQ = useQuery({
     queryKey: ["counselor-refs", counselorQ.data?.id],
     enabled: !!counselorQ.data?.id,

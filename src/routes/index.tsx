@@ -29,7 +29,6 @@ function Landing() {
 
           <div className="mt-6 flex items-center justify-center gap-3">
             <Icon3d name="cap" size={64} priority />
-            <Icon3d name="sparkle" size={36} className="-mt-6" />
           </div>
 
           <h1 className="mt-4 text-5xl font-bold leading-[1.02] tracking-tight md:text-7xl">
@@ -76,7 +75,7 @@ function Landing() {
             to="/leaderboard"
           />
           <BigCard
-            icon="sparkle"
+            icon="chart"
             title="Trends that tell a story"
             body="Watch your semester-over-semester growth in one elegant line."
             cta="View your trends"
