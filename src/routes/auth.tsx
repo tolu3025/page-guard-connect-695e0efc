@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [portal, setPortal] = useState<"select" | "student" | "counselor">("select");
+  const [portal, setPortal] = useState<"select" | "student" | "counselor" | "admin">("select");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +35,7 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signup") {
+      if (mode === "signup" && portal !== "admin") {
         const metadata: Record<string, any> = { full_name: fullName };
         if (portal === "student") {
           metadata.matric_no = matric.trim().toUpperCase() || null;
@@ -89,7 +89,7 @@ function AuthPage() {
               <div className="rounded-2xl border border-border bg-surface/50 p-5 hover:border-primary/50 transition">
                 <h3 className="text-sm font-semibold tracking-tight text-foreground uppercase">Student</h3>
                 <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-                  View your academic performance, CGPA, courses and progress.
+                  View your academic performance, CGPA, courses and personalized insights.
                 </p>
                 <button
                   onClick={() => {
@@ -106,7 +106,7 @@ function AuthPage() {
               <div className="rounded-2xl border border-border bg-surface/50 p-5 hover:border-primary/50 transition">
                 <h3 className="text-sm font-semibold tracking-tight text-foreground uppercase">Counsellor</h3>
                 <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-                  Monitor student performance, identify academic risks and provide guidance.
+                  Monitor assigned students, identify academic risks and manage interventions.
                 </p>
                 <button
                   onClick={() => {
@@ -118,18 +118,39 @@ function AuthPage() {
                   Counsellor Portal
                 </button>
               </div>
+
+              {/* Admin Portal Card */}
+              <div className="rounded-2xl border border-border bg-surface/50 p-5 hover:border-primary/50 transition">
+                <h3 className="text-sm font-semibold tracking-tight text-foreground uppercase">Administrator</h3>
+                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+                  View institution-wide analytics, risk distributions and academic insights.
+                </p>
+                <button
+                  onClick={() => {
+                    setPortal("admin");
+                    setMode("signin");
+                  }}
+                  className="mt-4 w-full rounded-full bg-secondary px-4 py-2.5 text-xs font-semibold text-secondary-foreground hover:bg-accent transition"
+                >
+                  Admin Portal
+                </button>
+              </div>
             </div>
           </div>
         ) : (
           <div className="card-elevated rounded-3xl p-8">
             <div className="mb-6">
               <h1 className="text-2xl font-semibold tracking-tight">
-                {mode === "signin"
+                {portal === "admin"
+                  ? "Admin Login"
+                  : mode === "signin"
                   ? `${portal === "student" ? "Student" : "Counsellor"} Login`
                   : `Create ${portal === "student" ? "Student" : "Counsellor"} Account`}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {mode === "signin"
+                {portal === "admin"
+                  ? "Sign in to access institution analytics."
+                  : mode === "signin"
                   ? "Sign in to view your record."
                   : portal === "student"
                   ? "Students: enter your matric number to link your record."
@@ -187,15 +208,17 @@ function AuthPage() {
             </form>
 
             <div className="mt-6 flex flex-col items-center gap-3 text-xs">
-              <div className="text-sm text-muted-foreground">
-                {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
-                <button
-                  className="font-medium text-primary hover:underline"
-                  onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-                >
-                  {mode === "signin" ? "Create an account" : "Sign in"}
-                </button>
-              </div>
+              {portal !== "admin" && (
+                <div className="text-sm text-muted-foreground">
+                  {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
+                  <button
+                    className="font-medium text-primary hover:underline"
+                    onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                  >
+                    {mode === "signin" ? "Create an account" : "Sign in"}
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => setPortal("select")}
